@@ -1,29 +1,46 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
 
 const tabItems = [
+  { href: '', label: 'Overview' },
   { href: 'strategy', label: 'Strategy' },
   { href: 'content', label: 'Content' },
   { href: 'analytics', label: 'Analytics' },
-  { href: 'recommendations', label: 'Recommendations' },
+  { href: 'recommendations', label: 'Insights' },
 ];
 
 export function CampaignTabs({ campaignId, activeTab }: Readonly<{ campaignId: number; activeTab: string }>) {
+  const pathname = usePathname();
+
   return (
-    <div className="flex flex-wrap gap-2 rounded-2xl border border-line bg-panel p-2">
-      <Link href={`/campaigns/${campaignId}`} className={cn('rounded-full px-4 py-2 text-sm font-semibold transition', activeTab === 'overview' ? 'bg-accent text-white' : 'text-muted hover:bg-panel-alt hover:text-text')}>
-        Overview
-      </Link>
-      {tabItems.map((tab) => (
-        <Link
-          key={tab.href}
-          href={`/campaigns/${campaignId}/${tab.href}`}
-          className={cn('rounded-full px-4 py-2 text-sm font-semibold transition', activeTab === tab.href ? 'bg-accent text-white' : 'text-muted hover:bg-panel-alt hover:text-text')}
-        >
-          {tab.label}
-        </Link>
-      ))}
+    <div className="mb-6 border-b border-line">
+      <nav className="-mb-px flex gap-0 overflow-x-auto" aria-label="Campaign sections">
+        {tabItems.map((tab) => {
+          const isActive = activeTab === (tab.href || 'overview');
+          const href = tab.href
+            ? `/campaigns/${campaignId}/${tab.href}`
+            : `/campaigns/${campaignId}`;
+          return (
+            <Link
+              key={tab.href || 'overview'}
+              href={href}
+              className={cn(
+                'flex-shrink-0 border-b-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap',
+                isActive
+                  ? 'border-accent text-accent'
+                  : 'border-transparent text-muted hover:border-line hover:text-text',
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

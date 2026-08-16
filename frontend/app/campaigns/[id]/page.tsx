@@ -1,60 +1,158 @@
 import Link from 'next/link';
 
 import { CampaignTabs } from '@/components/tabs';
-import { Badge, Card } from '@/components/ui';
+import { Badge, Button, Card, DataRow, Divider } from '@/components/ui';
 import { getCampaign } from '@/lib/api';
 
-export default async function CampaignDetailPage({ params }: Readonly<{ params: { id: string } }>) {
+function formatBudget(budget: number): string {
+  if (budget >= 1_000) return `₹${(budget / 1_000).toFixed(0)}k`;
+  return `₹${budget}`;
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export default async function CampaignDetailPage({
+  params,
+}: Readonly<{ params: { id: string } }>) {
   const { id } = params;
   const campaign = await getCampaign(Number(id)).catch(() => null);
 
   if (!campaign) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>Campaign not found.</Card>
+      <div className="mx-auto max-w-4xl px-6 py-12">
+        <Card>
+          <div className="text-center py-8">
+            <div className="text-sm font-semibold text-text mb-1">Campaign not found</div>
+            <div className="text-xs text-muted mb-4">
+              This campaign may have been deleted or the ID is invalid.
+            </div>
+            <Link href="/campaigns">
+              <Button variant="secondary" size="sm">
+                Back to campaigns
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Campaign</div>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight text-text">{campaign.name}</h1>
-          <p className="mt-3 text-muted">{campaign.objective}</p>
+    <div className="mx-auto max-w-7xl px-6 py-8">
+      {/* Campaign header */}
+      <div className="mb-6">
+        <div className="mb-1 flex items-center gap-2">
+          <Link
+            href="/campaigns"
+            className="text-xs text-muted hover:text-text transition"
+          >
+            Campaigns
+          </Link>
+          <span className="text-xs text-muted">/</span>
+          <span className="text-xs text-muted truncate max-w-xs">{campaign.name}</span>
         </div>
-        <Badge tone={campaign.status === 'active' ? 'success' : 'neutral'}>{campaign.status}</Badge>
-      </div>
-      <CampaignTabs campaignId={campaign.id} activeTab="overview" />
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card>
-          <div className="text-sm text-muted">Duration</div>
-          <div className="mt-2 text-2xl font-semibold">{campaign.duration} days</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-muted">Budget</div>
-          <div className="mt-2 text-2xl font-semibold">{campaign.budget}</div>
-        </Card>
-        <Card>
-          <div className="text-sm text-muted">Status</div>
-          <div className="mt-2 text-2xl font-semibold capitalize">{campaign.status}</div>
-        </Card>
-      </div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <h2 className="text-lg font-semibold text-text">Why this campaign exists</h2>
-          <p className="mt-3 text-sm leading-7 text-muted">{campaign.objective}</p>
-        </Card>
-        <Card>
-          <h2 className="text-lg font-semibold text-text">Quick links</h2>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link href={`/campaigns/${campaign.id}/strategy`} className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text">Strategy</Link>
-            <Link href={`/campaigns/${campaign.id}/content`} className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text">Content</Link>
-            <Link href={`/campaigns/${campaign.id}/analytics`} className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text">Analytics</Link>
-            <Link href={`/campaigns/${campaign.id}/recommendations`} className="rounded-full border border-line bg-panel px-4 py-2 text-sm font-semibold text-text">Recommendations</Link>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-text">{campaign.name}</h1>
+            <p className="mt-1 text-sm text-muted max-w-2xl">{campaign.objective}</p>
           </div>
-        </Card>
+          <Badge
+            tone={campaign.status === 'active' ? 'success' : 'neutral'}
+            dot
+          >
+            {campaign.status}
+          </Badge>
+        </div>
+      </div>
+
+      <CampaignTabs campaignId={campaign.id} activeTab="overview" />
+
+      {/* Overview content */}
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        {/* Campaign details */}
+        <div className="space-y-6">
+          <Card>
+            <div className="mb-4 text-sm font-semibold text-text">Campaign details</div>
+            <div className="divide-y divide-line">
+              <DataRow label="Status" value={
+                <Badge tone={campaign.status === 'active' ? 'success' : 'neutral'} dot>
+                  {campaign.status}
+                </Badge>
+              } />
+              <DataRow label="Duration" value={`${campaign.duration} days`} />
+              <DataRow label="Budget" value={formatBudget(campaign.budget)} />
+              <DataRow label="Created" value={formatDate(campaign.created_at)} />
+            </div>
+          </Card>
+
+          <Card>
+            <div className="mb-3 text-sm font-semibold text-text">Objective</div>
+            <p className="text-sm leading-relaxed text-muted">{campaign.objective}</p>
+          </Card>
+        </div>
+
+        {/* Quick navigation */}
+        <div className="space-y-4">
+          <Card>
+            <div className="mb-4 text-sm font-semibold text-text">Campaign sections</div>
+            <div className="space-y-1.5">
+              {[
+                { href: 'strategy', label: 'Strategy', desc: 'Positioning and content pillars' },
+                { href: 'content', label: 'Content plan', desc: 'Day-by-day content calendar' },
+                { href: 'analytics', label: 'Analytics', desc: 'Performance metrics and breakdown' },
+                { href: 'recommendations', label: 'Insights', desc: 'Optimization recommendations' },
+              ].map((section) => (
+                <Link
+                  key={section.href}
+                  href={`/campaigns/${campaign.id}/${section.href}`}
+                  className="flex items-center justify-between rounded-lg border border-line px-3 py-2.5 transition hover:bg-panelAlt group"
+                >
+                  <div>
+                    <div className="text-sm font-medium text-text">{section.label}</div>
+                    <div className="text-xs text-muted">{section.desc}</div>
+                  </div>
+                  <span className="text-xs text-accent opacity-0 group-hover:opacity-100 transition">
+                    →
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="mb-3 text-sm font-semibold text-text">Workflow status</div>
+            <div className="space-y-2">
+              {[
+                'Business analysis',
+                'Strategy development',
+                'Content planning',
+                'Campaign setup',
+                'Analytics ready',
+              ].map((step) => (
+                <div key={step} className="flex items-center gap-2.5">
+                  <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-successBg">
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                      <path
+                        d="M1.5 4L3 5.5L6.5 2"
+                        stroke="#16a34a"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <span className="text-xs text-text">{step}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );

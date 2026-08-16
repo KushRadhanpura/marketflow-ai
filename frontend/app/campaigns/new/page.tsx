@@ -1,13 +1,19 @@
 import { CampaignWizard } from './campaign-wizard';
 
+export const metadata = {
+  title: 'New Campaign',
+};
+
 export default function NewCampaignPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-8">
-        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Create campaign</div>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-text">Build a campaign brief</h1>
-        <p className="mt-3 max-w-2xl text-muted">
-          Step through the business brief, objective, channels, and review flow. When you generate, the backend creates the campaign and runs the agentic workflow.
+        <div className="text-xs font-semibold uppercase tracking-widest text-accent mb-1">
+          New campaign
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight text-text">Campaign brief</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted">
+          Step through the brief, confirm your settings, and generate the full campaign workflow.
         </p>
       </div>
       <CampaignWizard />

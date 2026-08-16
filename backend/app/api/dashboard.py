@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.campaign import Campaign
 from app.models.campaign_metric import CampaignMetric
-from app.schemas.analytics import MetricTotals
+from app.models.recommendation import Recommendation
 from app.schemas.dashboard import DashboardSummary
-from app.services.analytics_service import MetricRecord, build_channel_performance
+from app.services.analytics_service import MetricRecord, build_channel_performance, calculate_metric_totals
 from app.services.campaign_service import list_campaigns
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -31,18 +31,18 @@ def read_dashboard_summary(db: Session = Depends(get_db)) -> DashboardSummary:
         )
         for metric in metrics
     ]
-    totals = MetricTotals(
-        impressions=sum(metric.impressions for metric in metrics),
-        reach=sum(metric.reach for metric in metrics),
-        engagements=sum(metric.engagements for metric in metrics),
-        clicks=sum(metric.clicks for metric in metrics),
-        conversions=sum(metric.conversions for metric in metrics),
-        spend=float(sum(float(metric.spend) for metric in metrics)),
-    )
+    # Use the analytics service to compute all derived metrics correctly
+    totals = calculate_metric_totals(metric_records)
     recent_campaigns = list_campaigns(db)[:5]
+    recent_recommendations = list(
+        db.scalars(
+            select(Recommendation).order_by(Recommendation.created_at.desc()).limit(5)
+        )
+    )
     return DashboardSummary(
         active_campaigns=campaign_count,
         totals=totals,
         channel_performance=build_channel_performance(metric_records),
         recent_campaigns=recent_campaigns,
+        recent_recommendations=recent_recommendations,
     )
