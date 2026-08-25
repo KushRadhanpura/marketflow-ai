@@ -35,7 +35,7 @@ services:
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://marketflow-backend.onrender.com/api
+        value: https://marketflow-backend-ty7o.onrender.com/api
       - key: INTERNAL_API_URL
         value: http://marketflow-backend:8000/api
       - key: NEXT_TELEMETRY_DISABLED
