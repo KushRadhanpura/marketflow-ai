@@ -33,11 +33,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Standard prefix registrations (e.g. /api)
 app.include_router(campaigns_router, prefix=settings.api_v1_prefix)
 app.include_router(businesses_router, prefix=settings.api_v1_prefix)
 app.include_router(analytics_router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard_router, prefix=settings.api_v1_prefix)
 app.include_router(agents_router, prefix=settings.api_v1_prefix)
+
+# Fallback prefix registrations without the /api prefix, to prevent 404 router mismatch
+if settings.api_v1_prefix != "":
+    app.include_router(campaigns_router, prefix="")
+    app.include_router(businesses_router, prefix="")
+    app.include_router(analytics_router, prefix="")
+    app.include_router(dashboard_router, prefix="")
+    app.include_router(agents_router, prefix="")
 
 
 @app.get("/health", tags=["health"])

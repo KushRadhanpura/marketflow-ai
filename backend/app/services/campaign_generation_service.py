@@ -35,13 +35,13 @@ def _refine_strategy_with_llm(strategy: MarketingStrategy, business_summary: str
         f"Business summary: {business_summary}. Campaign objective: {campaign_objective}. "
         f"Current strategy: {strategy.model_dump_json()}."
     )
-    parsed = _maybe_parse_json(provider.generate_text(prompt))
-    if not isinstance(parsed, dict):
-        return strategy
-
     try:
+        parsed = _maybe_parse_json(provider.generate_text(prompt))
+        if not isinstance(parsed, dict):
+            return strategy
         return MarketingStrategy.model_validate(parsed)
     except Exception:
+        # Graceful fallback if LLM is unset, invalid key, or times out
         return strategy
 
 
@@ -60,19 +60,23 @@ def _refine_recommendations_with_llm(
         f"Campaign objective: {campaign_objective}. Strategy: {strategy.model_dump_json()}. "
         f"Current recommendations: {[item.model_dump() for item in recommendations]}."
     )
-    parsed = _maybe_parse_json(provider.generate_text(prompt))
-    if not isinstance(parsed, list):
-        return recommendations
+    try:
+        parsed = _maybe_parse_json(provider.generate_text(prompt))
+        if not isinstance(parsed, list):
+            return recommendations
 
-    refined: list[OptimizationRecommendation] = []
-    for item in parsed:
-        if not isinstance(item, dict):
-            continue
-        try:
-            refined.append(OptimizationRecommendation.model_validate(item))
-        except Exception:
-            continue
-    return refined or recommendations
+        refined: list[OptimizationRecommendation] = []
+        for item in parsed:
+            if not isinstance(item, dict):
+                continue
+            try:
+                refined.append(OptimizationRecommendation.model_validate(item))
+            except Exception:
+                continue
+        return refined or recommendations
+    except Exception:
+        # Graceful fallback if LLM fails
+        return recommendations
 
 
 def generate_campaign_assets(db: Session, campaign_id: int) -> CampaignGenerationResponse:
