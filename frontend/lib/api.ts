@@ -1,8 +1,28 @@
 import { Campaign, CampaignAnalytics, CampaignContentItem, CampaignGenerationResult, CampaignRecommendation, CampaignStrategy, DashboardSummary, Business } from '@/types/api';
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api';
+/**
+ * API base URL resolution strategy:
+ *
+ * - Server-side (SSR/RSC):  NEXT_PUBLIC_API_URL is the primary source.
+ *   In Docker/Render the internal service URL (http://backend:8000/api) is
+ *   injected as INTERNAL_API_URL so server components can reach the backend
+ *   container without going through the public network.
+ *
+ * - Client-side (browser):  NEXT_PUBLIC_API_URL is used (must be the public URL).
+ *
+ * Fallback for local development: http://localhost:8000/api
+ */
+function getApiBase(): string {
+  // On the server, prefer INTERNAL_API_URL (Docker internal routing)
+  if (typeof window === 'undefined') {
+    return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api';
+  }
+  // On the browser, always use the public-facing URL
+  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api';
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const apiBase = getApiBase();
   const response = await fetch(`${apiBase}${path}`, {
     ...init,
     headers: {

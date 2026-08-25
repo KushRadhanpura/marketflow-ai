@@ -1,0 +1,13 @@
+.venv
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+marketflow.db
+.git
+.vscode
+Dockerfile
+docker-compose.yml
+README.md

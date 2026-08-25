@@ -21,10 +21,14 @@ app = FastAPI(
     description="MarketFlow AI backend for campaign planning, analytics, and optimization.",
 )
 
+# Allow all origins when cors_allow_all is set (Render / Vercel deployments).
+# In development the explicit list of localhost origins is used.
+_allow_origins = ["*"] if settings.cors_allow_all else settings.cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=_allow_origins,
+    allow_credentials=not settings.cors_allow_all,  # credentials cannot be combined with *
     allow_methods=["*"],
     allow_headers=["*"],
 )

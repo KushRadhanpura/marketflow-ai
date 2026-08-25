@@ -9,6 +9,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -17,20 +22,32 @@ services:
       DATABASE_URL: postgresql+psycopg2://marketflow:marketflow@postgres:5432/marketflow
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      CORS_ALLOW_ALL: "true"
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
       context: ./frontend
     environment:
+      # Public URL used by the browser (change to your deployed backend URL in production)
       NEXT_PUBLIC_API_URL: http://localhost:8000/api
+      # Internal Docker URL used by SSR (Next.js server → FastAPI container)
+      INTERNAL_API_URL: http://backend:8000/api
+      NEXT_TELEMETRY_DISABLED: "1"
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
