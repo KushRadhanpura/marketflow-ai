@@ -1,11 +1,10 @@
-services:
-  # Database Service
-  - type: database
-    name: marketflow-db
+databases:
+  - name: marketflow-db
     databaseName: marketflow
     user: marketflow
     plan: free
 
+services:
   # FastAPI Backend Service
   - type: web
     name: marketflow-backend
@@ -22,7 +21,7 @@ services:
       - key: CORS_ALLOW_ALL
         value: "true"
       - key: LLM_API_KEY
-        sync: false # User can provide this via Render dashboard
+        sync: false
       - key: LLM_MODEL
         value: gpt-4o-mini
 
@@ -36,8 +35,8 @@ services:
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://marketflow-backend.onrender.com/api # Replace with actual backend service URL
+        value: https://marketflow-backend.onrender.com/api
       - key: INTERNAL_API_URL
-        value: http://marketflow-backend:8000/api # Fallback if internal routing is available on Render private network
+        value: http://marketflow-backend:8000/api
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
